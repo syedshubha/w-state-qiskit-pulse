@@ -1,0 +1,7 @@
+# w_state_pulse.ipynb: Qiskit Pulse needs the pre-1.0 Qiskit line.
+# Tested with Python 3.11 and 3.12.
+qiskit==0.46.0
+qiskit-aer==0.13.3
+numpy<2
+matplotlib
+pylatexenc

@@ -1,0 +1,9 @@
+# w_state_circuit.ipynb: gate-level W-state circuits on a current Qiskit.
+# Tested with Python 3.12. The final calibration-fetch cells also need
+# qiskit-ibm-runtime and an IBM Quantum account.
+qiskit==2.6.2
+qiskit-aer==0.18.4
+numpy>=2
+sympy
+matplotlib
+pylatexenc
