@@ -54,3 +54,7 @@ The full report, with derivations and discussion, is in [`docs/w-state-report.pd
 ## Author
 
 [Syed Emad Uddin Shubha](https://syedshubha.com), Louisiana State University
+
+## License
+
+[MIT](LICENSE)
