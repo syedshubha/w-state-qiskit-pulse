@@ -6,12 +6,28 @@ $$|W\rangle = \tfrac{1}{\sqrt{3}}\left(|001\rangle + |010\rangle + |100\rangle\r
 
 first as a gate-level circuit, then as a pulse schedule built from `ibm_sherbrooke` calibration data (physical qubits 1–3). Unlike a GHZ state, a W state keeps bipartite entanglement when one qubit is lost, which makes it useful for secret sharing and teleportation over noisy links.
 
+## Edit the circuit in your browser
+
+Open the [three-transmon pulse lab](https://syedshubha.com/transmon/) and load **W state**. The preset uses the decomposed circuit from the circuit notebook and measures all three wires. Try editing the first \(R_y\) angle or removing a CX, then inspect the resulting pulse schedule and ideal basis probabilities. The lab writes basis labels in wire order \(q_0q_1q_2\). Qiskit statevectors print \(q_2q_1q_0\) from left to right.
+
+The [browser source](browser/) can also be served from this checkout.
+
+```bash
+python3 -m http.server 8000 --directory browser
+```
+
+Open [localhost:8000](http://localhost:8000/) to use the editor. To verify the preset's preparation independently of the browser and Qiskit, run `python3 w_state_reference.py`. This script applies the seven unitary gates to \(|000\rangle\) and checks that exactly the three single-excitation amplitudes equal \(1/\sqrt{3}\) up to numerical precision.
+
+The lab uses a teaching compiler with illustrative timings, virtual frame updates, and an echoed effective \(ZX\) model for CX. The legacy notebook uses the Sherbrooke snapshot and hand-chosen cross-resonance parameters for its original pulse sequence. The browser's ideal output probabilities come from the circuit gates.
+
+## Original Qiskit notebooks
+
 | Notebook | What it does | Environment |
 | --- | --- | --- |
 | [`notebooks/w_state_circuit.ipynb`](notebooks/w_state_circuit.ipynb) | Two gate-level W-state circuits, checked against the exact statevector; then reads T₁, T₂, readout error, and drive frequencies from the backend and saves them to [`data/wstate_backend_params.json`](data/wstate_backend_params.json). | [`requirements-circuit.txt`](requirements-circuit.txt) (Qiskit 2.x) |
 | [`notebooks/w_state_pulse.ipynb`](notebooks/w_state_pulse.ipynb) | Estimates π-pulse amplitudes per qubit, defines pulse-level RY, X, cross-resonance CNOT, and measurement blocks, and assembles the full W-state schedule. | [`requirements-pulse.txt`](requirements-pulse.txt) (Qiskit 0.46) |
 
-The two notebooks need different Qiskit versions because Qiskit Pulse was removed in Qiskit 1.0.
+The pulse notebook is pinned to Qiskit 0.46 to reproduce the original API. IBM deprecated Qiskit Pulse in 1.3 and removed it in 2.0. See the [Qiskit 2.0 release notes](https://quantum.cloud.ibm.com/docs/en/api/qiskit/release-notes/2.0).
 
 ## Run it
 
@@ -30,7 +46,7 @@ The calibration snapshot in `data/` lets the pulse notebook run without an IBM Q
 
 ## Results
 
-**Gate-level circuit.** Both constructions start with `RY(2 arccos(1/√3))` on q0, then a controlled-RY(π/2) (native in the first, decomposed into RY–CNOT–RY in the second), two CNOTs, and an X on q0. Each returns amplitude 1/√3 on |001⟩, |010⟩, and |100⟩ and zero elsewhere.
+**Gate-level circuit.** Both constructions start with `RY(2 arccos(1/√3))` on q0, then use a controlled rotation on q1, two CNOTs, and an X on q0. The decomposed version uses RY(π/4), CX(0, 1), and RY(−π/4) for the controlled rotation on this input. The second CX in the full controlled-RY decomposition can be dropped here because q1 is already in the +1 eigenstate of X on the q0 = 1 branch. Each circuit returns amplitude 1/√3 on |001⟩, |010⟩, and |100⟩ and zero elsewhere.
 
 ![W-state circuit](figures/w_state_circuit.png)
 

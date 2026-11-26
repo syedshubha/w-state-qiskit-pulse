@@ -1,4 +1,4 @@
-# w_state_pulse.ipynb: Qiskit Pulse needs the pre-1.0 Qiskit line.
+# w_state_pulse.ipynb: reproduce the original schedule with Qiskit 0.46.
 # Tested with Python 3.11 and 3.12.
 qiskit==0.46.0
 qiskit-aer==0.13.3

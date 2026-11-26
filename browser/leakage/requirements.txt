@@ -1,0 +1,5 @@
+# Versions verified together in the native Python 3.12 environment.
+numpy==2.5.5
+scipy==1.18.1
+qutip==5.3.1
+iqm-pulse==16.0.0

@@ -1,0 +1,49 @@
+.leakage-panel { margin-top: 17px; padding: 21px 22px 16px; scroll-margin-top: 18px; }
+.leakage-layout { display: grid; grid-template-columns: minmax(235px,.73fr) minmax(0,1.27fr); gap: 16px; margin-top: 14px; }
+.leakage-controls, .leakage-plot-card { min-width: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--page); padding: 14px; }
+.leakage-controls > label, .leakage-fields label { display: grid; gap: 4px; color: var(--muted); font-size: .76rem; font-weight: 650; }
+.leakage-controls select, .leakage-controls input[type="number"] { width: 100%; min-width: 0; min-height: 34px; padding: 5px 7px; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+.leakage-controls select:focus-visible, .leakage-options summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.leakage-fields { display: grid; gap: 9px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.leakage-options { margin-top: 10px; }
+.leakage-options .leakage-fields { margin-top: 8px; }
+.leakage-options summary { width: fit-content; color: var(--accent); font-size: .76rem; font-weight: 650; cursor: pointer; }
+.leakage-drive-context, .leakage-options p, .leakage-status, .leakage-context, .leakage-legend, .leakage-foot { font-size: .73rem; color: var(--muted); }
+.leakage-drive-context { min-height: 1.05rem; margin: 5px 0 9px; font-family: var(--mono); }
+.leakage-options p, .leakage-status { margin-top: 7px; }
+.leakage-status[data-kind="error"] { color: var(--gold,var(--accent)); }
+.leakage-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
+.leakage-run, .leakage-cancel { border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--ink); min-height: 35px; padding: 5px 10px; font: inherit; font-size: .76rem; font-weight: 700; }
+.leakage-run { background: var(--accent-pale); border-color: var(--accent); }
+.leakage-run:hover:not(:disabled), .leakage-cancel:hover { border-color: var(--accent); }
+.leakage-detail { accent-color: var(--accent); }
+.leakage-plot-card { display: grid; align-items: start; }
+.leakage-empty { height: 100%; min-height: 190px; display: grid; place-content: center; justify-items: center; text-align: center; padding: 14px; border-radius: 6px; border: 1px dashed var(--border); }
+.leakage-empty strong, .leakage-plot-actions strong { font-size: .89rem; }
+.leakage-empty p { max-width: 37ch; color: var(--muted); font-size: .81rem; margin-top: 4px; }
+.leakage-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; margin-bottom: 11px; }
+.leakage-metrics div { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 6px; padding: 6px; background: var(--surface); }
+.leakage-metrics strong { color: var(--ink); font: 680 clamp(.63rem,1.8vw,1.04rem)/1.4 var(--mono); white-space: nowrap; }
+.leakage-metrics span { color: var(--muted); font-size: .68rem; }
+.leakage-plot-actions { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 3px 10px; align-items: center; margin-bottom: 4px; }
+.leakage-plot-actions label { display: inline-flex; gap: 4px; align-items: center; color: var(--muted); font-size: .74rem; font-weight: 620; }
+.leakage-chart { display: block; width: 100%; max-height: 265px; overflow: visible; }
+.leakage-chart text { fill: var(--muted); font: 11px/1 var(--mono); }
+.leakage-grid { stroke: var(--border); }
+.leakage-line { stroke: var(--trace); stroke-width: 1.6; }
+.leakage-key { border-top: 2px solid var(--trace); display: inline-block; width: 12px; }
+.leakage-color-0 { --trace: var(--accent); }
+.leakage-color-1 { --trace: var(--teal); }
+.leakage-color-2 { --trace: var(--gold,#a75e1a); }
+.leakage-color-3 { --trace: var(--blue,#3b66ac); }
+.leakage-color-4 { --trace: #d35783; }
+.leakage-color-5 { --trace: #659532; }
+.leakage-color-total { --trace: var(--ink); stroke-dasharray: 4 3; border-top-style: dashed; }
+.leakage-legend { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 4px; }
+.leakage-legend span { display: flex; align-items: center; gap: 4px; }
+.leakage-context { margin-top: 6px; }
+.leakage-foot { margin-top: 11px; }
+.leakage-foot nav { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 5px; }
+.leakage-foot a { color: var(--accent); text-underline-offset: 2px; }
+@media (max-width: 840px) { .leakage-layout { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .leakage-panel { padding: 16px 12px; } .leakage-controls, .leakage-plot-card { padding: 10px; } }
