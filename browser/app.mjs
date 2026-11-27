@@ -619,7 +619,10 @@ play.addEventListener('click', () => animation ? stop() : start());
 
 function describeTheme() {
   const dark = document.documentElement.dataset.theme === 'dark';
-  themeToggle.textContent = dark ? 'Light mode' : 'Dark mode';
+  byId('theme-label').textContent = dark ? 'Light Mode' : 'Dark Mode';
+  const action = dark ? 'Switch to light theme' : 'Switch to dark theme';
+  themeToggle.setAttribute('aria-label', action);
+  themeToggle.title = action;
   document.querySelector('meta[name="theme-color"]').content = dark ? '#0d0818' : '#f9f8fb';
 }
 
@@ -627,6 +630,11 @@ themeToggle.addEventListener('click', () => {
   const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = theme;
   try { localStorage.setItem('syed_theme', theme); } catch {}
+  describeTheme();
+});
+window.addEventListener('storage', event => {
+  if (event.key !== 'syed_theme') return;
+  document.documentElement.dataset.theme = event.newValue === 'light' ? 'light' : 'dark';
   describeTheme();
 });
 
