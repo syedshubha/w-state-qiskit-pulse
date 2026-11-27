@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Build a three-qubit superconducting circuit and inspect the microwave drives, frame changes, and readout windows it compiles to.">
+  <meta name="description" content="Edit a three-transmon circuit, see how T1, T2 and leakage affect the outcomes, and inspect its microwave pulse schedule.">
   <meta name="theme-color" content="#0d0818">
   <link rel="canonical" href="https://syedshubha.com/transmon/">
   <script>
@@ -19,35 +19,25 @@
   <title>Transmon Pulse Lab | Syed Shubha</title>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to the lab</a>
   <header class="site-header">
     <div class="shell header-inner">
       <a class="wordmark" href="https://syedshubha.com/" aria-label="Syed Shubha portfolio"><span class="brand-mark" aria-hidden="true">|S⟩</span><span>Syed Shubha</span></a>
-      <nav aria-label="Lab sections"><a href="#builder">Circuit</a><a href="#leakage">Leakage</a><a href="#model">Model notes</a><a href="https://github.com/syedshubha/w-state-qiskit-pulse/tree/main/browser">Source code</a></nav>
+      <nav aria-label="Portfolio"><a href="https://syedshubha.com/#research">Research</a><a href="https://syedshubha.com/qsvt/">QSVT Lab</a><a href="https://github.com/syedshubha/w-state-qiskit-pulse/tree/main/browser">Source code</a></nav>
       <button type="button" class="theme-button" id="theme-toggle">Light mode</button>
     </div>
   </header>
 
-  <main class="shell">
-    <section class="hero" aria-labelledby="page-title">
-      <div class="hero-copy">
-        <h1 id="page-title">Transmon Pulse Lab</h1>
-        <p class="hero-question">What does an X gate tell a superconducting chip to do?</p>
-        <p class="hero-context">Build a three-qubit circuit and follow its gates down to microwave drives and readout. Then take one drive and see when it populates levels outside the qubit.</p>
-        <div class="hero-actions"><a class="hero-link" href="#builder">Open the circuit editor</a><a class="hero-source" href="https://github.com/syedshubha/w-state-qiskit-pulse">Original W-state project</a></div>
-      </div>
-      <div class="chip" aria-label="Linear three-transmon layout. q0 connects to q1, and q1 connects to q2.">
-        <div class="chip-heading"><span class="chip-dot" aria-hidden="true"></span> Three-transmon chain</div>
-        <div class="chip-layout">
-          <div class="chip-site"><div class="chip-node">q<sub>0</sub></div><span>4.736 GHz</span></div>
-          <div class="chip-site"><div class="chip-node">q<sub>1</sub></div><span>4.819 GHz</span></div>
-          <div class="chip-site"><div class="chip-node">q<sub>2</sub></div><span>4.747 GHz</span></div>
-        </div>
-        <div class="chip-caption"><span aria-hidden="true">○</span> Historical Sherbrooke drive frequencies</div>
-      </div>
-    </section>
+  <main class="shell" id="main-content" tabindex="-1">
+    <header class="lab-title">
+      <h1 id="page-title">Transmon Pulse Lab</h1>
+      <p>Build a three-transmon circuit. Change its noise parameters and inspect the pulses behind each gate.</p>
+      <nav class="stage-nav" aria-label="Laboratory stages"><a href="#builder">Circuit and noise</a><a href="#schedule">Pulse schedule</a><a href="#leakage">Isolated pulse</a><a href="#model">Model limits</a></nav>
+    </header>
 
-    <div class="top-grid" id="builder">
-      <section class="panel circuit-panel" aria-labelledby="circuit-title">
+    <section class="panel workbench" id="builder" aria-labelledby="circuit-title">
+      <div class="top-grid">
+      <div class="circuit-panel">
         <div class="panel-heading circuit-heading"><div><h2 id="circuit-title">Circuit editor</h2><p>Choose a gate, then click a slot on a wire.</p></div><button class="icon-button" id="undo" type="button" title="Undo last edit" aria-label="Undo last edit" disabled>↶</button></div>
         <div class="preset-bar" aria-label="Circuit presets">
           <button class="preset" type="button" data-preset="w">W state</button>
@@ -63,18 +53,32 @@
           <div id="circuit-grid" class="circuit-grid" role="group" aria-label="Quantum circuit"></div>
         </div>
         <div class="editor-footer"><div id="editor-status" role="status" aria-live="polite"></div><button id="remove" type="button" class="text-button" disabled>Remove selected</button></div>
-      </section>
+        <fieldset class="noise-controls" id="noise-controls">
+          <legend>Noise parameters</legend>
+          <div class="noise-fields">
+            <label><span><var>T</var><sub>1</sub> (µs)</span><input id="t1" type="number" min="0.05" max="10000" step="any" value="20" aria-label="T1 relaxation time in microseconds"></label>
+            <label><span><var>T</var><sub>2</sub> (µs)</span><input id="t2" type="number" min="0.05" max="10000" step="any" value="12" aria-label="T2 coherence time in microseconds"></label>
+            <label>Anharmonicity (MHz)<input id="alpha" type="number" min="-400" max="-40" step="any" value="-220" aria-label="Anharmonicity in megahertz"></label>
+          </div>
+          <div class="noise-actions"><label><input id="include-leakage" type="checkbox" checked> Include leakage</label><button id="strong-leakage" class="text-button" type="button">Strong leakage</button><button id="short-coherence" class="text-button" type="button">Short coherence</button><button id="reset-noise" class="text-button" type="button">Reset</button></div>
+          <p id="noise-status" role="status" class="noise-status"><var>T</var><sub>1</sub> sets energy decay. <var>T</var><sub>2</sub> sets coherence decay. Values are shared by all three wires.</p>
+        </fieldset>
+      </div>
 
-      <section class="panel outcome-panel" aria-labelledby="outcome-title">
-        <div class="panel-heading"><div><h2 id="outcome-title">Ideal outcomes</h2><p id="outcome-note">Computational basis · q₀q₁q₂</p></div></div>
-        <div id="outcome-tabs" class="outcome-tabs" aria-label="Probability view"><button type="button" class="view-button" data-view="state">Final state</button><button type="button" class="view-button" data-view="readout">Readout record</button></div>
+      <section class="outcome-panel" aria-labelledby="outcome-title">
+        <div class="panel-heading"><div><h3 id="outcome-title">Circuit outcomes</h3><p id="outcome-note">Final levels · q₀q₁q₂</p></div></div>
+        <div id="outcome-tabs" class="outcome-tabs" aria-label="Probability view"><button type="button" class="view-button" data-view="state">Final levels</button><button type="button" class="view-button" data-view="readout">Readout record</button></div>
         <div id="outcome-bars" class="outcome-bars" aria-label="Outcome probabilities"></div>
+        <div id="wire-leakage" class="wire-leakage" aria-label="Final leakage per wire"></div>
+        <label class="compare-toggle"><input type="checkbox" id="compare-ideal"> Mark ideal probabilities</label>
         <p id="outcome-caption" class="outcome-caption"></p>
       </section>
-    </div>
+      </div>
+      <p class="scope-note">The circuit assumes a fixed chip and an idealized CX. <a href="#model">What changes when you redesign the chip?</a></p>
+    </section>
 
-    <section class="panel schedule-panel" aria-labelledby="schedule-title">
-      <div class="panel-heading schedule-heading"><div><h2 id="schedule-title">Pulse schedule</h2><p>Gates in a column start together. The next column waits for the longest gate. Select an instruction to inspect it.</p></div><span class="duration" id="duration"></span></div>
+    <section class="panel schedule-panel" id="schedule" aria-labelledby="schedule-title">
+      <div class="panel-heading schedule-heading"><div><h2 id="schedule-title">Pulse schedule</h2><p>Select an instruction to inspect its timing and phase.</p></div><span class="duration" id="duration"></span></div>
       <div class="schedule-toolbar">
         <div class="legend" aria-label="Schedule legend"><span><i class="i-line"></i> I quadrature</span><span><i class="q-line"></i> Q quadrature</span><span><i class="frame-dot"></i> Frame update</span><span><i class="window-key"></i> Acquire</span></div>
         <label class="lane-toggle"><input type="checkbox" id="all-lanes"> Show idle channels</label>
@@ -94,32 +98,12 @@
 
     <section class="panel leakage-panel" id="leakage" aria-label="Single-transmon leakage experiment"></section>
 
-    <section class="model" id="model" aria-labelledby="model-title">
-      <h2 id="model-title">What does each calculation tell us?</h2>
-      <div class="model-chapter">
-        <h3>From a gate to a schedule</h3>
-        <p>Start with X on q₀. The circuit asks us to exchange |0⟩ and |1⟩. In the ideal two-level model a resonant drive does this when its integrated rotation rate is π. The two components of the drive envelope, I and Q, set the rotation axis. Y rotates by the same angle about an axis 90° away. A virtual Z instead shifts the phase reference for later drives. Try the phase-test circuit to see HZH turn that phase change into a bit flip.</p>
-        <p>The schedule uses an idealized echoed ZX interaction to implement CX. Measurement adds a probe tone and an acquisition window for the returning signal. The JavaScript model computes the ideal circuit from |000⟩, with projective measurements and a record of the last outcome on each measured wire. The W-state circuit follows the original notebook. Its pulse templates and timings are illustrative.</p>
-      </div>
-      <div class="model-chapter">
-        <h3>Why can a pulse leave the qubit?</h3>
-        <p>A transmon has energy levels above |1⟩. Holding the intended rotation fixed while shortening the pulse raises the drive strength. The drive can then populate higher levels. If <var>p<sub>n</sub>(t)</var> is the population of level <var>n</var>, the leakage at time <var>t</var> is <span class="formula">1 − <var>p<sub>0</sub>(t)</var> − <var>p<sub>1</sub>(t)</var></span>. Compare how much population leaves the qubit during the drive and how much remains outside it at the end.</p>
-        <p>The leakage experiment takes one local drive from the editor and starts a separate transmon in |0⟩ by default. QuTiP evolves a rotating-frame Duffing oscillator, a model with unequally spaced energy levels. The result depends on the specified anharmonicity, pulse shape and level truncation. It describes an isolated pulse. Earlier gates, couplers, neighboring drives and readout resonators are outside this calculation.</p>
-      </div>
-      <div class="model-chapter" id="tool-boundary">
-        <h3>Where do QuTiP and IQM Pulse enter?</h3>
-        <dl class="boundary-grid">
-          <div><dt>JavaScript compiler</dt><dd>Builds the circuit timeline with its own gate templates and displays ideal probabilities. The drive selected for the leakage experiment supplies a nominal angle, duration and phase.</dd></div>
-          <div><dt>IQM Pulse 16.0.0</dt><dd>Generated the waveform samples for the leakage experiment. The browser rescales those samples. The public Python reference can regenerate the waveforms directly with IQM Pulse.</dd></div>
-          <div><dt>QuTiP 4.7.0 in WebAssembly</dt><dd>Solves the isolated transmon’s time evolution in the browser. The native Python reference runs the same model with QuTiP 5.3.1. The browser loads the numerical runtime when you run the experiment.</dd></div>
-        </dl>
-      </div>
-      <div class="model-chapter">
-        <h3>What changes if we change the chip?</h3>
-        <p>Suppose we move a drive electrode away from a transmon. To predict how that changes the pulse response, we need the electromagnetic coupling of the new geometry. EmulateQPU-4Q starts with a parameterized layout and extracts electrical quantities using Gmsh and Palace. Circuit quantization turns them into energy levels and interactions. Pulse calibration chooses the controls, and multilevel evolution shows how the resulting model responds across several transmons.</p>
-        <p>Independent solvers can check the numerical calculation. Predictions for a fabricated chip also need measured calibration, and the four-transmon reference documents open work on mounted-device RF convergence and readout linewidths.</p>
-      </div>
-      <nav class="references" aria-label="Model references"><a href="https://github.com/syedshubha/w-state-qiskit-pulse/tree/main/browser">Public source copy</a><a href="https://qutip.org/qutip-virtual-lab/">QuTiP Virtual Lab</a><a href="https://docs.iqm.tech/iqm-pulse/">IQM Pulse</a><a href="https://github.com/syedshubha/EmulateQPU-4Q">EmulateQPU-4Q</a><a href="https://doi.org/10.1103/PhysRevA.96.022330">Virtual Z gates</a><a href="https://doi.org/10.1103/PhysRevA.93.060302">Cross-resonance calibration</a></nav>
+    <section class="panel model" id="model" aria-labelledby="model-title">
+      <h2 id="model-title">Model limits</h2>
+      <p>Move a drive electrode and the same control signal can produce a different rotation. <a href="https://github.com/syedshubha/EmulateQPU-4Q">EmulateQPU-4Q</a> connects layout and electromagnetic extraction to a coupled transmon model and pulse calibration. Predicting a fabricated chip also requires measured calibration.</p>
+      <details><summary>Circuit and readout assumptions</summary><p>Each wire keeps |0⟩, |1⟩ and |2⟩. Finite local drives can populate |2⟩. CX acts as identity when either of its wires occupies |2⟩. Independent relaxation and dephasing act after each column for its full duration, including on idle wires. Ideal level-resolving readout records |2⟩ as L. Pulse timings are illustrative.</p></details>
+      <details id="tool-boundary"><summary>Where QuTiP and IQM Pulse enter</summary><p>The circuit result uses JavaScript. The isolated pulse experiment runs QuTiP 4.7.0 in your browser and uses waveform samples generated by IQM Pulse 16.0.0. It starts from a fresh state. The selected drive contributes its nominal angle, duration and phase. The <a href="https://github.com/syedshubha/w-state-qiskit-pulse/tree/main/browser">public source</a> includes native Python reproduction.</p></details>
+      <nav class="references" aria-label="Model references"><a href="https://github.com/syedshubha/w-state-qiskit-pulse">Original W-state project</a><a href="https://qutip.org/qutip-virtual-lab/">QuTiP Virtual Lab</a><a href="https://docs.iqm.tech/iqm-pulse/">IQM Pulse</a></nav>
     </section>
   </main>
   <script type="module" src="./app.mjs"></script>

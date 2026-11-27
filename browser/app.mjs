@@ -1,4 +1,5 @@
 import {GATES, PRESETS, compile, simulate, sampleEnvelope, validate} from './engine.mjs';
+import {simulateNoisy} from './noise.mjs';
 
 const byId = id => document.getElementById(id);
 const make = (tag, className, content) => {
@@ -23,13 +24,11 @@ const channels = [
 const channelLabel = Object.fromEntries(channels);
 const qLabel = qubit => `q${qubit}`;
 const degrees = value => `${Number((value * 180 / Math.PI).toFixed(2))}°`;
-const percent = fraction => `${(fraction * 100).toFixed(1)}%`;
-const basisLabel = index => index.toString(2).padStart(3, '0');
-const presetNotes = {
-  w: 'The W-state preset has one excitation shared equally across the three wires.',
-  bell: 'The first two wires share a Bell pair. The third stays in |0⟩.',
-  phase: 'The middle Z is a frame update. The last H turns its relative phase into a bit flip.',
+const percent = fraction => {
+  const value = 100 * Math.max(0, fraction);
+  return `${value > 0 && value < 0.01 ? value.toPrecision(2) : value.toFixed(2)}%`;
 };
+const basisLabel = index => index.toString(2).padStart(3, '0');
 
 const palette = byId('palette');
 const grid = byId('circuit-grid');
@@ -41,6 +40,12 @@ const play = byId('play');
 const status = byId('editor-status');
 const presetButtons = [...document.querySelectorAll('[data-preset]')];
 const viewButtons = [...document.querySelectorAll('[data-view]')];
+const t1 = byId('t1');
+const t2 = byId('t2');
+const alpha = byId('alpha');
+const includeLeakage = byId('include-leakage');
+const compare = byId('compare-ideal');
+const noiseStatus = byId('noise-status');
 
 let operations = PRESETS.w;
 let preset = 'w';
@@ -51,8 +56,11 @@ let pickedEvent = null;
 let pendingControl = null;
 let focusSlot = {column: 0, qubit: 0};
 let result;
+let ideal;
 let schedule;
 let leakage;
+let noise = readNoise();
+let pendingNoiseUpdate = 0;
 let view = 'state';
 let history = [];
 let time = 0;
@@ -228,6 +236,35 @@ function removeSelected() {
   announce('Gate removed.');
 }
 
+function readNoise() {
+  return {
+    t1Us: t1.valueAsNumber,
+    t2Us: t2.valueAsNumber,
+    anharmonicityMhz: alpha.valueAsNumber,
+    leakageEnabled: includeLeakage.checked,
+  };
+}
+
+function updateNoise() {
+  cancelAnimationFrame(pendingNoiseUpdate);
+  const values = readNoise();
+  const rangeError = [t1, t2, alpha].some(field => !field.validity.valid || !Number.isFinite(field.valueAsNumber));
+  const coherenceError = values.t2Us > 2 * values.t1Us;
+  const message = rangeError ? 'Enter times from 0.05 to 10,000 µs and anharmonicity from −400 to −40 MHz.' : coherenceError ? 'For this model, T₂ can be at most 2 × T₁.' : '';
+  noiseStatus.classList.toggle('error', Boolean(message));
+  t2.setAttribute('aria-invalid', String(coherenceError));
+  if (message) {
+    noiseStatus.textContent = `${message} Showing the last valid settings.`;
+    return;
+  }
+  noiseStatus.textContent = 'T₁ sets energy decay. T₂ sets coherence decay. Values are shared by all three wires.';
+  noise = values;
+  pendingNoiseUpdate = requestAnimationFrame(() => {
+    result = simulateNoisy(operations, noise);
+    renderOutcomes();
+  });
+}
+
 function renderOutcomes() {
   if (result.measured.length === 0) view = 'state';
   for (const item of viewButtons) {
@@ -236,21 +273,40 @@ function renderOutcomes() {
     item.setAttribute('aria-pressed', String(item.dataset.view === view));
   }
   const readings = view === 'readout';
-  const displayed = readings ? result.outcomes : result.probabilities.map((probability, index) => ({bits: basisLabel(index), probability}));
+  const displayed = readings ? result.outcomes : [...result.probabilities.map((probability, index) => ({bits: basisLabel(index), probability})), {bits: 'Leakage', probability: result.leakage}];
+  const marks = readings ? new Map(ideal.outcomes.map(item => [item.bits, item.probability])) : new Map(ideal.probabilities.map((probability, index) => [basisLabel(index), probability]));
   const bars = byId('outcome-bars');
+  bars.dataset.view = view;
   bars.replaceChildren();
   for (const {bits, probability} of displayed) {
     const row = make('div', 'outcome-bar');
     const track = make('div', 'bar-track');
     const fill = make('div', 'bar-fill');
-    fill.style.width = percent(probability);
+    const leaks = bits.includes('L');
+    fill.style.width = `${100 * Math.max(0, Math.min(1, probability))}%`;
     track.append(fill);
     track.setAttribute('aria-hidden', 'true');
-    row.append(make('code', '', readings ? bits : `|${bits}⟩`), track, make('span', 'bar-value', percent(probability)));
+    const idealProbability = marks.get(bits) ?? 0;
+    if (compare.checked && idealProbability > 1e-12) {
+      const mark = make('span', 'bar-ideal');
+      mark.style.left = `${100 * idealProbability}%`;
+      track.append(mark);
+      row.setAttribute('aria-label', `${bits}: ${percent(probability)}, ideal ${percent(idealProbability)}`);
+    }
+    row.classList.toggle('is-leakage', leaks);
+    row.append(make('code', '', readings || leaks ? bits : `|${bits}⟩`), track, make('span', 'bar-value', percent(probability)));
     bars.append(row);
   }
-  byId('outcome-note').textContent = readings ? `Stored bits · ${result.measured.map(qLabel).join(', ')}` : 'Computational basis · q₀q₁q₂';
-  byId('outcome-caption').textContent = readings ? 'Each bit comes from the last measurement on its wire.' : (presetNotes[preset] ?? 'Basis probabilities after the final circuit step.');
+  const wires = byId('wire-leakage');
+  wires.replaceChildren();
+  if (!readings) {
+    wires.append(make('span', '', 'Final |2⟩ by wire'));
+    result.perQubitLeakage.forEach((value, qubit) => wires.append(make('b', '', `q${qubit} ${percent(value)}`)));
+  }
+  wires.hidden = readings;
+  byId('outcome-note').textContent = readings ? `Last recorded result · ${result.measured.map(qLabel).join(', ')}` : 'Final computed levels · q₀q₁q₂';
+  const note = readings ? 'L marks a recorded |2⟩ level.' : 'Leakage counts any wire ending in |2⟩.';
+  byId('outcome-caption').textContent = compare.checked ? `${note} Vertical marks show the ideal probabilities.` : note;
 }
 
 function pulsePaths(event) {
@@ -421,8 +477,10 @@ function start() {
 function refresh() {
   const restoreFocus = grid.contains(document.activeElement);
   stop();
+  cancelAnimationFrame(pendingNoiseUpdate);
   schedule = compile(operations);
-  result = simulate(operations);
+  ideal = simulate(operations);
+  result = simulateNoisy(operations, noise);
   leakage?.update(schedule.events);
   updateControls();
   renderCircuit(restoreFocus);
@@ -453,6 +511,23 @@ for (const item of presetButtons) item.addEventListener('click', () => {
 for (const item of viewButtons) item.addEventListener('click', () => {
   view = item.dataset.view;
   renderOutcomes();
+});
+byId('noise-controls').addEventListener('input', updateNoise);
+compare.addEventListener('change', renderOutcomes);
+byId('strong-leakage').addEventListener('click', () => {
+  alpha.value = '-40';
+  includeLeakage.checked = true;
+  updateNoise();
+});
+byId('short-coherence').addEventListener('click', () => {
+  t1.value = '1';
+  t2.value = '0.12';
+  updateNoise();
+});
+byId('reset-noise').addEventListener('click', () => {
+  for (const input of [t1, t2, alpha]) input.value = input.defaultValue;
+  includeLeakage.checked = includeLeakage.defaultChecked;
+  updateNoise();
 });
 grid.addEventListener('click', event => {
   const slot = event.target.closest('.slot');
