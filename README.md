@@ -2,13 +2,13 @@
 
 Prepares the three-qubit W state
 
-$$|W\rangle = \tfrac{1}{\sqrt{3}}\left(|001\rangle + |010\rangle + |100\rangle\right)$$
+<p align="center"><b>|W⟩ = (|001⟩ + |010⟩ + |100⟩) / √3</b></p>
 
 first as a gate-level circuit, then as a pulse schedule built from `ibm_sherbrooke` calibration data (physical qubits 1–3). Unlike a GHZ state, a W state keeps bipartite entanglement when one qubit is lost, which makes it useful for secret sharing and teleportation over noisy links.
 
 ## Edit the circuit in your browser
 
-Open the [three-transmon pulse lab](https://syedshubha.com/transmon/) and load **W state**. The preset uses the decomposed circuit from the circuit notebook and measures all three wires. Try editing the first \(R_y\) angle or removing a CX, then inspect the resulting pulse schedule and ideal basis probabilities. The lab writes basis labels in wire order \(q_0q_1q_2\). Qiskit statevectors print \(q_2q_1q_0\) from left to right.
+Open the [three-transmon pulse lab](https://syedshubha.com/transmon/) and load **W state**. The preset uses the decomposed circuit from the circuit notebook and measures all three wires. Try editing the first R<sub>y</sub> angle or removing a CX, then inspect the resulting pulse schedule and ideal basis probabilities. The lab writes basis labels in wire order q₀q₁q₂. Qiskit statevectors print q₂q₁q₀ from left to right.
 
 The [browser source](browser/) can also be served from this checkout.
 
@@ -16,9 +16,9 @@ The [browser source](browser/) can also be served from this checkout.
 python3 -m http.server 8000 --directory browser
 ```
 
-Open [localhost:8000](http://localhost:8000/) to use the editor. To verify the preset's preparation independently of the browser and Qiskit, run `python3 w_state_reference.py`. This script applies the seven unitary gates to \(|000\rangle\) and checks that exactly the three single-excitation amplitudes equal \(1/\sqrt{3}\) up to numerical precision.
+Open [localhost:8000](http://localhost:8000/) to use the editor. To verify the preset's preparation independently of the browser and Qiskit, run `python3 w_state_reference.py`. This script applies the seven unitary gates to |000⟩ and checks that exactly the three single-excitation amplitudes equal 1/√3 up to numerical precision.
 
-The lab uses a teaching compiler with illustrative timings, virtual frame updates, and an echoed effective \(ZX\) model for CX. The legacy notebook uses the Sherbrooke snapshot and hand-chosen cross-resonance parameters for its original pulse sequence. The browser's ideal output probabilities come from the circuit gates.
+The lab uses a teaching compiler with illustrative timings, virtual frame updates, and an echoed effective ZX model for CX. The legacy notebook uses the Sherbrooke snapshot and hand-chosen cross-resonance parameters for its original pulse sequence. The browser's ideal output probabilities come from the circuit gates.
 
 ## Original Qiskit notebooks
 
